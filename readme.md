@@ -7,13 +7,19 @@ The important addition is
    https://community.mellanox.com/docs/DOC-2431
  - adjusting LD_LIBRARY_PATH in the container to add /usr/lib/libibverbs, which is where the IB driver libs are
 
-We also mount the CHPC sys branch and use Intel compilers and Intel MPI in the sys branch to compile MPI programs in the container, and then
-run on the host.
+We also mount the CHPC sys branch and use Intel compilers and Intel MPI in the sys branch to compile MPI programs in the container, and then run on the host.
+
+From our tests, MPICH compatible MPIs of recent vintage (MPICH 3.2 tested) integrate correctly with Singularity. Haven't done much testing with OpenMPI but some basic tests on the most recent OMPI seem to work.
 
 After the container is built, sudo to the container and build MPI program, e.g.
 sudo singularity shell -s /bin/bash -B /uufs ubuntu_mpi.img
 source /uufs/chpc.utah.edu/sys/installdir/intel/compilers_and_libraries_2017/linux/bin/compilervars.sh intel64
- -- TODO - explore options to bring in LMod
+(or wherever your Intel stack may be).
+
+We also install Lua and libraries for LMod modules that we have in our NFS mounted sys branch (with specific LMod installation for Ubuntu), so that we can use LMod in the container to load our modules. Then we can simply
+ml intel impi
+
+In the container shell, then we compile the OSU labwc.c program:
 mpicc latbw.c -o latbw
 
 Then exit the container, submit a job on 2 nodes and run the latbw over IB:
