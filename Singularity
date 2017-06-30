@@ -1,5 +1,6 @@
 # Defines a Singularity container with IB stack 
-#
+# Includes Lmod for using CHPC installed compilers and MPI distros
+# (MPICH derived MPI distros work)
 
 
 
@@ -18,6 +19,9 @@ From: ubuntu:16.10
 
 %post
     # Runs within the container during Bootstrap
+    # need to create mount point for home dir
+    mkdir /uufs
+    mkdir /scratch
 
 
     # Install the necessary packages (from repo)
@@ -45,8 +49,9 @@ From: ubuntu:16.10
 
     # Set up some required environment defaults
     #MC issue with locale (LC_ALL, LANGUAGE), to get it right:
-    locale-gen "en_US.UTF-8" 
-    dpkg-reconfigure locales 
+    apt-get install -y language-pack-en
+    locale-gen "en_US.UTF-8"
+    dpkg-reconfigure locales
     export LANGUAGE="en_US.UTF-8"
     echo 'LANGUAGE="en_US.UTF-8"' >> /etc/default/locale
     echo 'LC_ALL="en_US.UTF-8"' >> /etc/default/locale
@@ -60,9 +65,6 @@ From: ubuntu:16.10
         matplotlib \
         scipy 
 
-    # need to create mount point for home dir
-    mkdir /uufs
-    mkdir /scratch
     
     # IB stuff, based on https://community.mellanox.com/docs/DOC-2431
     apt-get install -y dkms infiniband-diags libibverbs* ibacm librdmacm* libmlx4* libmlx5* mstflint libibcm.* libibmad.* libibumad* opensm srptools libmlx4-dev librdmacm-dev rdmacm-utils ibverbs-utils perftest vlan ibutils
@@ -72,34 +74,27 @@ From: ubuntu:16.10
     # git, wget
     apt-get install -y git wget
 
-    # path to mlx IB libraries in Ubuntu
-    echo "export LD_LIBRARY_PATH=/usr/lib/libibverbs:$LD_LIBRARY_PATH" >> /environment
 
     # LMod
-    apt-get install -y liblua5.1-0 liblua5.1-0-dev lua-filesystem-dev lua-filesystem lua-posix-dev lua-posix lua5.1
+    apt-get install -y liblua5.1-0 liblua5.1-0-dev lua-filesystem-dev lua-filesystem lua-posix-dev lua-posix lua5.1 tcl tcl-dev lua-term lua-term-dev lua-json
 
-#   Singularity inherits hosts environment = all LMod environment variables
-#   to get LMod in the container, we have to build it using the container
-#   in the sys branch, and then user has to have this in ~/.custom.sh
-#   make sure the lines below are at the end of ~/.custom.sh, otherwise the %test section will fail
-#export OSVER=`lsb_release -r | awk '{ print $2; }'`
-#export OSREL=`lsb_release -i | awk '{ print $3; }'`
-#
-#if [ -n "$SINGULARITY_CONTAINER" ] && [ -n "$SINGULARITY_MOD" ]; then
-#  if [ $OSREL == "CentOS" ]; then # assume only CentOS7
-#    source /uufs/chpc.utah.edu/sys/installdir/lmod/7.1.6-c7/init/bash
-#  elif [ $OSREL == "Ubuntu" ]; then # assume only Ubuntu 16
-#    source /uufs/chpc.utah.edu/sys/modulefiles/scripts/clear_lmod.sh
-#    source /uufs/chpc.utah.edu/sys/installdir/lmod/7.4-u16/init/profile
-#  fi
-#fi
     echo "
-export SINGULARITY_MOD=1
-    " >> /environment
+if [ -f /uufs/chpc.utah.edu/sys/etc/profile.d/module.sh ]
+then
+   . /uufs/chpc.utah.edu/sys/etc/profile.d/module.sh
+fi
+   " > /etc/profile.d/91-chpc.sh
+
+    echo "
+. /etc/profile.d/91-chpc.sh
+" >> /etc/bash.bashrc
+
+
+%environment    
+    # path to mlx IB libraries in Ubuntu
+LD_LIBRARY_PATH=/usr/lib/libibverbs:$LD_LIBRARY_PATH
 %test
     # Sanity check that the container is operating
     # none of this will work because sys branch is not bound at bootstrap
 #    /uufs/chpc.utah.edu/sys/installdir/intel/compilers_and_libraries_2017.0.098/linux/mpi/intel64/bin/mpirun -np 2 /uufs/chpc.utah.edu/sys/installdir/intel/compilers_and_libraries_2017.0.098/linux/mpi/intel64/bin/IMB-MPI1
-#    source /uufs/chpc.utah.edu/sys/modulefiles/scripts/clear_lmod.sh
-#    source /uufs/chpc.utah.edu/sys/installdir/lmod/7.4-u16/init/profile
    # ml intel
