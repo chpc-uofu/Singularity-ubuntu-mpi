@@ -5,7 +5,7 @@
 
 
 BootStrap: docker
-From: ubuntu:16.10
+From: ubuntu:16.04
 #Include: rpm2cpio
 
 
@@ -57,13 +57,13 @@ From: ubuntu:16.10
     echo 'LC_ALL="en_US.UTF-8"' >> /etc/default/locale
 
     # Update to the latest pip (newer than repo)
-    pip install --no-cache-dir --upgrade pip
-    
-    # Install other commonly-needed packages
-    pip install --no-cache-dir --upgrade \
-        future \
-        matplotlib \
-        scipy 
+   #pip install --no-cache-dir --upgrade pip
+   #
+   ## Install other commonly-needed packages
+   #pip install --no-cache-dir --upgrade \
+   #    future \
+   #    matplotlib \
+   #    scipy 
 
     
     # IB stuff, based on https://community.mellanox.com/docs/DOC-2431
@@ -72,7 +72,7 @@ From: ubuntu:16.10
     apt-get install -y libnl-3-200 libnl-route-3-200 libnl-route-3-dev libnl-utils
 
     # git, wget
-    apt-get install -y git wget
+    apt-get install -y git wget mpich
 
 
     # LMod
